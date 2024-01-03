@@ -11,40 +11,34 @@ const (
 	CONN_TYPE = "tcp"
 )
 
-func handleConnection(conn net.Conn) {
-	buffer := make([]byte, 64)
-
-	for {
-		n, err := conn.Read(buffer)
-		if err != nil {
-			conn.Close()
-			log.Printf("ERROR: COULD NOT READ FROM CONNECTION: %s", err)
-		}
-		//channel <- buffer[0:n]
-		//x := <-channel
-		_, error := conn.Write(buffer[0:n])
-		if error != nil {
-			conn.Close()
-			log.Printf("ERROR: COULD NOT READ FROM CONNECTION: %s", error)
-		}
-	}
-}
-
 func main() {
+	// Listen for connections in desired port
 	ln, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		log.Fatalf("ERROR: COULD NOT LISTEN TO PORT: %s", err)
 	}
 
-	//message := make(chan []byte)
+	log.Printf("Listening for connections on port %s", CONN_PORT)
+
+	messages := make(chan Message)
+
+	// Handle the message channel through the server
+	go server(messages)
+
 	for {
+		// Accept every connection to the chatroom
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("ERROR: COULD NOT ACCEPT CONNECTION %s", conn.RemoteAddr().String())
 		}
-
 		log.Printf("ACCEPTED CONNECTION FROM %s", conn.RemoteAddr().String())
 
-		go handleConnection(conn)
+		// Create a message, attach it the connection incoming and send it through the channel
+		messages <- Message{
+			Conn: conn,
+		}
+
+		// Handle the message channel through the client
+		go client(conn, messages)
 	}
 }
