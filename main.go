@@ -12,8 +12,21 @@ const (
 )
 
 func handleConnection(conn net.Conn) {
-	conn.Write([]byte("Hello friend!"))
-	conn.Close()
+	buffer := make([]byte, 64)
+
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			conn.Close()
+			log.Printf("ERROR: COULD NOT READ FROM CONNECTION: %s", err)
+		}
+
+		_, error := conn.Write(buffer[0:n])
+		if error != nil {
+			conn.Close()
+			log.Printf("ERROR: COULD NOT READ FROM CONNECTION: %s", error)
+		}
+	}
 }
 
 func main() {
