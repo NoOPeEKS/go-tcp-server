@@ -20,7 +20,8 @@ func handleConnection(conn net.Conn) {
 			conn.Close()
 			log.Printf("ERROR: COULD NOT READ FROM CONNECTION: %s", err)
 		}
-
+		//channel <- buffer[0:n]
+		//x := <-channel
 		_, error := conn.Write(buffer[0:n])
 		if error != nil {
 			conn.Close()
@@ -35,11 +36,14 @@ func main() {
 		log.Fatalf("ERROR: COULD NOT LISTEN TO PORT: %s", err)
 	}
 
+	//message := make(chan []byte)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("ERROR: COULD NOT ACCEPT CONNECTION %s", conn.RemoteAddr().String())
 		}
+
+		log.Printf("ACCEPTED CONNECTION FROM %s", conn.RemoteAddr().String())
 
 		go handleConnection(conn)
 	}
